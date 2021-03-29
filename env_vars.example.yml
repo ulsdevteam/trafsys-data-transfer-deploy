@@ -1,0 +1,5 @@
+ORACLE_USER: oracleuser
+ORACLE_PASSWORD: oraclepw
+ORACLE_CONNECTION_STRING: oracleconnstring/theotherpart
+TRAFSYS_USER: trafsysuser
+TRAFSYS_PASSWORD: trafsyspw

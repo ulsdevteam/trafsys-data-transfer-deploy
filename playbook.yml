@@ -1,0 +1,54 @@
+---
+
+- name: Deploy Trafsys Data Transfer
+  hosts: all
+  vars:
+    app_folder: /var/opt/trafsys-data-transfer
+
+  tasks:
+    - name: Grab env vars from env_vars.yml
+      include_vars:
+        file: env_vars.yml
+        name: env_vars
+
+    - name: Clone from git
+      git:
+        repo: https://github.com/ulsdevteam/trafsys-data-transfer.git
+        dest: '{{ app_folder }}'
+        force: yes
+      become: yes
+
+    - name: Ensure node/npm is installed
+      yum:
+        name: nodejs
+        state: present
+      become: yes
+
+    - name: Set group permissions
+      file:
+        path: '{{ app_folder }}'
+        state: directory
+        recurse: yes
+        group: ulssysdev
+        mode: '0774'
+      become: yes
+
+    - name: Install node dependencies
+      community.general.npm:
+        path: '{{ app_folder }}'
+
+    - name: Set environment variables
+      lineinfile:
+        dest: '/etc/environment'
+        state: present
+        regexp: '^{{ item.key }}='
+        line: '{{ item.key }}={{ item.value }}'
+      with_items: '{{ env_vars | dict2items }}'
+      become: yes
+
+    - name: Schedule cron job
+      cron:
+        name: 'run trafsys-data-transfer'
+        hour: '5'
+        minute: '0'
+        job: 'cd {{ app_folder }} && node script.js'

@@ -1,9 +1,10 @@
 ---
 
 - name: Deploy Trafsys Data Transfer
-  hosts: all
+  hosts: uda4
   vars:
     app_folder: /var/opt/trafsys-data-transfer
+    user: trafsysdatatransfer
 
   tasks:
     - name: Grab env vars from env_vars.yml
@@ -18,9 +19,9 @@
         force: yes
       become: yes
 
-    - name: Ensure node/npm is installed
-      yum:
-        name: nodejs
+    - name: Create dedicated user
+      user:
+        name: '{{ user }}'
         state: present
       become: yes
 
@@ -30,21 +31,31 @@
         state: directory
         recurse: yes
         group: ulssysdev
-        mode: '0774'
+        owner: '{{ user }}'
+        mode: '02770'
+      become: yes
+
+    - name: Set environment variables
+      lineinfile:
+        dest: '/home/{{ user }}/.bashrc'
+        state: present
+        regexp: '^export {{ item.key }}='
+        line: 'export {{ item.key }}={{ item.value }}'
+      with_items: '{{ env_vars | dict2items }}'
+      become: yes
+
+    - name: enable source
+      lineinfile:
+        dest: '/home/{{ user }}/.bashrc'
+        state: present
+        line: 'source scl_source enable rh-nodejs14'
       become: yes
 
     - name: Install node dependencies
       community.general.npm:
         path: '{{ app_folder }}'
-
-    - name: Set environment variables
-      lineinfile:
-        dest: '/etc/environment'
-        state: present
-        regexp: '^{{ item.key }}='
-        line: '{{ item.key }}={{ item.value }}'
-      with_items: '{{ env_vars | dict2items }}'
       become: yes
+      become_user: '{{ user }}'
 
     - name: Schedule cron job
       cron:
@@ -52,3 +63,5 @@
         hour: '5'
         minute: '0'
         job: 'cd {{ app_folder }} && node script.js'
+      become: yes
+      become_user: '{{ user }}'

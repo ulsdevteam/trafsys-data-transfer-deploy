@@ -38,7 +38,7 @@
 
     - name: Set environment variables
       lineinfile:
-        dest: '/home/{{ user }}/.bashrc'
+        dest: '/home/{{ user }}/.profile'
         state: present
         regexp: '^export {{ item.key }}='
         line: 'export {{ item.key }}={{ item.value }}'
@@ -47,7 +47,7 @@
 
     - name: enable source
       lineinfile:
-        dest: '/home/{{ user }}/.bashrc'
+        dest: '/home/{{ user }}/.profile'
         state: present
         line: 'source scl_source enable rh-nodejs14'
       become: yes
@@ -57,12 +57,13 @@
         path: '{{ app_folder }}'
       become: yes
       become_user: '{{ user }}'
+      become_flags: '-i'
 
     - name: Schedule cron job
       cron:
         name: 'run trafsys-data-transfer'
         hour: '5'
         minute: '0'
-        job: 'cd {{ app_folder }} && node script.js'
+        job: 'node {{ app_folder }}/script.js'
       become: yes
       become_user: '{{ user }}'

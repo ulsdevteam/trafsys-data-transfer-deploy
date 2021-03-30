@@ -2,6 +2,7 @@
 
 - name: Deploy Trafsys Data Transfer
   hosts: uda4
+  remote_user: ulsprovision
   vars:
     app_folder: /var/opt/trafsys-data-transfer
     user: trafsysdatatransfer

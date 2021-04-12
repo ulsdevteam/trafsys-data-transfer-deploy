@@ -64,6 +64,13 @@
         name: 'run trafsys-data-transfer'
         hour: '5'
         minute: '0'
-        job: 'node {{ app_folder }}/script.js'
+        job: "/usr/local/bin/cronic sh -c 'source ~/.profile; node /var/opt/trafsys-data-transfer/script.js'"
       become: yes
       become_user: '{{ user }}'
+
+    - name: Send mail to root
+      lineinfile:
+        dest: /etc/aliases
+        regexp: '^trafsysdatatransfer:'
+        line: 'trafsysdatatransfer: root'
+      become: yes
